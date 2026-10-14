@@ -1,0 +1,108 @@
+<div class="container">
+  <h2>Task Management Portal</h2>
+
+  <!-- Create Task Form -->
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>Create New Task</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="task-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title" placeholder="Task title" />
+          <mat-error *ngIf="taskForm.get('title')?.hasError('required')">
+            Title is required
+          </mat-error>
+          <mat-error *ngIf="taskForm.get('title')?.hasError('minlength')">
+            Minimum 3 characters required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Assigned To</mat-label>
+          <input matInput formControlName="assignedTo" placeholder="Assignee name" />
+          <mat-error *ngIf="taskForm.get('assignedTo')?.hasError('required')">
+            Assignee name is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="PENDING">PENDING</mat-option>
+            <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
+            <mat-option value="COMPLETED">COMPLETED</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">
+          Add Task
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Task Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>All Tasks</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+     <table mat-table [dataSource]="tasks" class="mat-elevation-z2 full-width-table">
+
+  <!-- ID Column -->
+  <ng-container matColumnDef="id">
+    <th mat-header-cell *matHeaderCellDef> ID </th>
+    <td mat-cell *matCellDef="let task"> {{ task.id }} </td>
+  </ng-container>
+
+  <!-- Title Column -->
+  <ng-container matColumnDef="title">
+    <th mat-header-cell *matHeaderCellDef> Title </th>
+    <td mat-cell *matCellDef="let task"> {{ task.title }} </td>
+  </ng-container>
+
+  <!-- Assigned To Column (YEH MISSING THA YA SPELLING ALAG THI) -->
+  <ng-container matColumnDef="assignedTo">
+    <th mat-header-cell *matHeaderCellDef> Assigned To </th>
+    <td mat-cell *matCellDef="let task"> {{ task.assignedTo }} </td>
+  </ng-container>
+
+  <!-- Status Column -->
+  <ng-container matColumnDef="status">
+    <th mat-header-cell *matHeaderCellDef> Status </th>
+    <td mat-cell *matCellDef="let task">
+      <mat-form-field appearance="outline" style="width: 140px; margin-top: 8px;">
+        <mat-select [value]="task.status" (selectionChange)="onStatusChange(task.id, $event.value)">
+          <mat-option value="PENDING">PENDING</mat-option>
+          <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
+          <mat-option value="COMPLETED">COMPLETED</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </td>
+  </ng-container>
+
+  <!-- Actions Column -->
+  <ng-container matColumnDef="actions">
+    <th mat-header-cell *matHeaderCellDef> Actions </th>
+    <td mat-cell *matCellDef="let task">
+      <button mat-icon-button color="warn" (click)="deleteTask(task.id)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+</table>
+
+      <p *ngIf="tasks.length === 0" class="empty-state">No tasks available. Add one above!</p>
+    </mat-card-content>
+  </mat-card>
+</div>
