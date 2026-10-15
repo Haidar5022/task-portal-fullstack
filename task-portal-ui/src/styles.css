@@ -1,1 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
+/* Custom Status Dropdown Panel Fix */
+.custom-status-panel {
+  min-width: 160px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+}
+
+.custom-status-panel .mat-mdc-option {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  min-height: 40px !important;
+}

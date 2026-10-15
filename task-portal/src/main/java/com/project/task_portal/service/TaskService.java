@@ -30,6 +30,15 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    public Task updateTask(Long id, Task taskDetails) {
+        Task task = getTaskById(id);
+        task.setTitle(taskDetails.getTitle());
+        task.setDescription(taskDetails.getDescription());
+        task.setAssignedTo(taskDetails.getAssignedTo());
+        task.setStatus(taskDetails.getStatus());
+        return taskRepository.save(task);
+    }
+
     public Task updateTaskStatus(Long id, TaskStatus status) {
         Task task = getTaskById(id);
         task.setStatus(status);

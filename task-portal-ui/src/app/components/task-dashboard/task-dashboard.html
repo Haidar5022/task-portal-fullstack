@@ -1,108 +1,192 @@
-<div class="container">
-  <h2>Task Management Portal</h2>
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-icon-box">
+        <mat-icon>task_alt</mat-icon>
+      </div>
+      <div>
+        <h1 class="main-title">Task Management Portal</h1>
+        <p class="subtitle">Streamline workflows, track team deliverables, and manage milestones</p>
+      </div>
+    </div>
+  </header>
 
-  <!-- Create Task Form -->
-  <mat-card class="form-card">
-    <mat-card-header>
-      <mat-card-title>Create New Task</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="task-form">
-        <mat-form-field appearance="outline">
-          <mat-label>Title</mat-label>
-          <input matInput formControlName="title" placeholder="Task title" />
-          <mat-error *ngIf="taskForm.get('title')?.hasError('required')">
-            Title is required
-          </mat-error>
-          <mat-error *ngIf="taskForm.get('title')?.hasError('minlength')">
-            Minimum 3 characters required
-          </mat-error>
+  <!-- Create / Edit Task Form Card -->
+  <mat-card class="modern-card form-card">
+    <div class="card-top-bar" [ngClass]="isEditMode ? 'editing-bar' : ''">
+      <div class="card-heading">
+        <mat-icon class="card-header-icon">{{ isEditMode ? 'mode_edit' : 'add_circle' }}</mat-icon>
+        <span>{{ isEditMode ? ('Edit Task #' + editingTaskId) : 'Create New Task' }}</span>
+      </div>
+      <span *ngIf="isEditMode" class="edit-indicator-tag">Editing in progress</span>
+    </div>
+
+    <mat-card-content class="card-body">
+      <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="form-layout">
+        <!-- Title Input -->
+        <div class="input-group">
+          <label class="custom-label">Task Title <span class="required">*</span></label>
+          <mat-form-field appearance="outline" class="custom-field">
+            <input matInput formControlName="title" placeholder="e.g. Implement OAuth Flow" />
+            <mat-icon matPrefix class="field-icon">title</mat-icon>
+            <mat-error *ngIf="taskForm.get('title')?.hasError('required')">Title is required</mat-error>
+            <mat-error *ngIf="taskForm.get('title')?.hasError('minlength')">Minimum 3 characters required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Assignee Input -->
+        <div class="input-group">
+          <label class="custom-label">Assignee Name <span class="required">*</span></label>
+          <mat-form-field appearance="outline" class="custom-field">
+            <input matInput formControlName="assignedTo" placeholder="e.g. Md Haidar" />
+            <mat-icon matPrefix class="field-icon">person_outline</mat-icon>
+            <mat-error *ngIf="taskForm.get('assignedTo')?.hasError('required')">Assignee name is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Status Select -->
+        <div class="input-group">
+          <label class="custom-label">Status <span class="required">*</span></label>
+          <mat-form-field appearance="outline" class="custom-field">
+            <mat-select formControlName="status">
+              <mat-option value="PENDING">PENDING</mat-option>
+              <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
+              <mat-option value="COMPLETED">COMPLETED</mat-option>
+            </mat-select>
+            <mat-icon matPrefix class="field-icon">flag</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Description Full Row -->
+        <div class="input-group full-row">
+          <label class="custom-label">Task Description</label>
+          <mat-form-field appearance="outline" class="custom-field">
+            <textarea matInput formControlName="description" rows="2" placeholder="Brief details about the task, requirements..."></textarea>
+            <mat-icon matPrefix class="field-icon textarea-icon">description</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-btn-actions full-row">
+          <button *ngIf="isEditMode" mat-stroked-button type="button" class="cancel-btn" (click)="cancelEdit()">
+            <mat-icon>close</mat-icon>
+            Cancel
+          </button>
+          <button mat-flat-button color="primary" type="submit" class="submit-btn" [disabled]="taskForm.invalid">
+            <mat-icon>{{ isEditMode ? 'done_all' : 'add' }}</mat-icon>
+            {{ isEditMode ? 'Update Task' : 'Add Task' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Data Table Card -->
+  <mat-card class="modern-card table-card">
+    <div class="table-card-header">
+      <div>
+        <h3 class="table-title">Task Pipeline</h3>
+        <p class="table-subtitle">Showing {{ dataSource.filteredData.length }} of {{ tasks.length }} total tasks</p>
+      </div>
+
+      <!-- Filter / Search Toolbar -->
+      <div class="filter-controls">
+        <mat-form-field appearance="outline" class="search-box">
+          <mat-icon matPrefix class="field-icon">search</mat-icon>
+          <mat-label>Search tasks or assignees...</mat-label>
+          <input matInput (keyup)="onSearchChange($event)" placeholder="Search..." />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Assigned To</mat-label>
-          <input matInput formControlName="assignedTo" placeholder="Assignee name" />
-          <mat-error *ngIf="taskForm.get('assignedTo')?.hasError('required')">
-            Assignee name is required
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
+        <mat-form-field appearance="outline" class="status-box">
+          <mat-icon matPrefix class="field-icon">tune</mat-icon>
+          <mat-label>Filter Status</mat-label>
+          <mat-select [(value)]="selectedStatus" (selectionChange)="onStatusFilterChange($event.value)">
+            <mat-option value="ALL">All Statuses</mat-option>
             <mat-option value="PENDING">PENDING</mat-option>
             <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
             <mat-option value="COMPLETED">COMPLETED</mat-option>
           </mat-select>
         </mat-form-field>
+      </div>
+    </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
+    <mat-card-content class="card-body no-padding">
+      <div class="responsive-table-wrap">
+        <table mat-table [dataSource]="dataSource" class="styled-table">
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">
-          Add Task
-        </button>
-      </form>
-    </mat-card-content>
-  </mat-card>
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef class="th-id"> ID </th>
+            <td mat-cell *matCellDef="let task" class="td-id">
+              <span class="id-tag">#{{ task.id }}</span>
+            </td>
+          </ng-container>
 
-  <!-- Task Table -->
-  <mat-card class="table-card">
-    <mat-card-header>
-      <mat-card-title>All Tasks</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-     <table mat-table [dataSource]="tasks" class="mat-elevation-z2 full-width-table">
+          <!-- Title Column -->
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef class="th-title"> Task Title </th>
+            <td mat-cell *matCellDef="let task" class="td-title">
+              <div class="task-cell-content">
+                <span class="cell-task-name">{{ task.title }}</span>
+                <span class="cell-task-desc" *ngIf="task.description">{{ task.description }}</span>
+              </div>
+            </td>
+          </ng-container>
 
-  <!-- ID Column -->
-  <ng-container matColumnDef="id">
-    <th mat-header-cell *matHeaderCellDef> ID </th>
-    <td mat-cell *matCellDef="let task"> {{ task.id }} </td>
-  </ng-container>
+          <!-- Assigned To Column -->
+          <ng-container matColumnDef="assignedTo">
+            <th mat-header-cell *matHeaderCellDef class="th-assignee"> Assigned To </th>
+            <td mat-cell *matCellDef="let task" class="td-assignee">
+              <div class="user-pill">
+                <div class="avatar-circle">{{ (task.assignedTo ? task.assignedTo.charAt(0) : 'U') | uppercase }}</div>
+                <span class="user-name">{{ task.assignedTo }}</span>
+              </div>
+            </td>
+          </ng-container>
 
-  <!-- Title Column -->
-  <ng-container matColumnDef="title">
-    <th mat-header-cell *matHeaderCellDef> Title </th>
-    <td mat-cell *matCellDef="let task"> {{ task.title }} </td>
-  </ng-container>
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef class="th-status"> Status </th>
+            <td mat-cell *matCellDef="let task" class="td-status">
+              <div class="status-badge-container" [ngClass]="'badge-' + task.status.toLowerCase()">
+                <mat-select 
+                  [value]="task.status" 
+                  (selectionChange)="onStatusChange(task.id, $event.value)"
+                  panelClass="custom-status-panel"
+                  class="status-select-trigger">
+                  <mat-option value="PENDING">PENDING</mat-option>
+                  <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
+                  <mat-option value="COMPLETED">COMPLETED</mat-option>
+                </mat-select>
+              </div>
+            </td>
+          </ng-container>
 
-  <!-- Assigned To Column (YEH MISSING THA YA SPELLING ALAG THI) -->
-  <ng-container matColumnDef="assignedTo">
-    <th mat-header-cell *matHeaderCellDef> Assigned To </th>
-    <td mat-cell *matCellDef="let task"> {{ task.assignedTo }} </td>
-  </ng-container>
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="th-actions"> Actions </th>
+            <td mat-cell *matCellDef="let task" class="td-actions">
+              <button mat-icon-button class="action-btn edit-icon-btn" (click)="startEdit(task)" title="Edit task details">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button class="action-btn delete-icon-btn" (click)="deleteTask(task.id)" title="Delete task">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          </ng-container>
 
-  <!-- Status Column -->
-  <ng-container matColumnDef="status">
-    <th mat-header-cell *matHeaderCellDef> Status </th>
-    <td mat-cell *matCellDef="let task">
-      <mat-form-field appearance="outline" style="width: 140px; margin-top: 8px;">
-        <mat-select [value]="task.status" (selectionChange)="onStatusChange(task.id, $event.value)">
-          <mat-option value="PENDING">PENDING</mat-option>
-          <mat-option value="IN_PROGRESS">IN_PROGRESS</mat-option>
-          <mat-option value="COMPLETED">COMPLETED</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </td>
-  </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="interactive-row"></tr>
+        </table>
+      </div>
 
-  <!-- Actions Column -->
-  <ng-container matColumnDef="actions">
-    <th mat-header-cell *matHeaderCellDef> Actions </th>
-    <td mat-cell *matCellDef="let task">
-      <button mat-icon-button color="warn" (click)="deleteTask(task.id)">
-        <mat-icon>delete</mat-icon>
-      </button>
-    </td>
-  </ng-container>
-
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
-
-      <p *ngIf="tasks.length === 0" class="empty-state">No tasks available. Add one above!</p>
+      <!-- Empty State -->
+      <div *ngIf="dataSource.filteredData.length === 0" class="empty-state-card">
+        <mat-icon class="empty-box-icon">sentiment_dissatisfied</mat-icon>
+        <h4>No Tasks Found</h4>
+        <p>No task matches your current filter or search criteria.</p>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

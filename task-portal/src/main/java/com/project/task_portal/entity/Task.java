@@ -8,7 +8,7 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
+// @AllArgsConstructor
 @Builder
 public class Task {
 
@@ -26,4 +26,12 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
+
+    public Task(Long id, String title, String description, String assignedTo, TaskStatus status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.assignedTo = assignedTo;
+        this.status = status;
+    }
 }

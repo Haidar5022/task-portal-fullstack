@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Task, TaskStatus } from '../models/task.model';
 
@@ -11,22 +11,37 @@ export class TaskService {
 
   constructor(private http: HttpClient) {}
 
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('token') || '';
+    return {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      })
+    };
+  }
+
   getTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>(this.apiUrl);
+    return this.http.get<Task[]>(this.apiUrl, this.getAuthHeaders());
   }
 
   createTask(task: Task): Observable<Task> {
-    return this.http.post<Task>(this.apiUrl, task);
+    return this.http.post<Task>(this.apiUrl, task, this.getAuthHeaders());
   }
 
-  updateTaskStatus(id: number, status: TaskStatus): Observable<Task> {
-    return this.http.patch<Task>(`${this.apiUrl}/${id}/status?status=${status}`, {});
+  updateTask(id: number, task: Partial<Task>): Observable<Task> {
+    return this.http.put<Task>(`${this.apiUrl}/${id}`, task, this.getAuthHeaders());
+  }
+
+  updateStatus(id: number, status: TaskStatus): Observable<Task> {
+    return this.http.patch<Task>(
+      `${this.apiUrl}/${id}/status?status=${status}`,
+      {},
+      this.getAuthHeaders()
+    );
   }
 
   deleteTask(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, this.getAuthHeaders());
   }
-  updateStatus(id: number, status: string): Observable<Task> {
-  return this.http.patch<Task>(`${this.apiUrl}/${id}/status?status=${status}`, {});
-}
 }
